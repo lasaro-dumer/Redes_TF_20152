@@ -3,18 +3,17 @@ import java.io.FileReader;
 import java.io.IOException;
 
 public class Reader{
-	public static void main(String[] args){
-	
-		try (BufferedReader br = new BufferedReader(new FileReader("/media/joao/Flash/GitHub/Redes_TF_20152/topologia.txt")))
+	public String  read(String caminho){
+	StringBuilder sb = StringBuilder();
+		try (BufferedReader br = new BufferedReader(new FileReader(".../Redes_TF_20152/"+caminho)))
 		{
-	
 			String sCurrentLine;
-
 			while((sCurrentLine = br.readLine()) != null){
-				System.out.println(sCurrentLine);
+				sb.append(sCurrentLine);
 			}
 		}catch (IOException e){
 		e.printStackTrace();
 		}
+	return sb.toString();
 	}
 }
