@@ -1,18 +1,33 @@
 public class TFNode extends ITFNetworkElement {
     public String name;
     public String MAC;
-    public String IP;
-    //TODO: create a object to this, and store IP in another field (a string)
-    public String gateway;
+    private String IP;
+    private String IPPrefix;
+    public TFRouter gateway;
+    public String gatewayIP;
 
-    public TFNode(String name,String MAC,String IP,String gateway){
+    public TFNode(String name,String MAC,String ipprefix,String gatewayIP){
         this.name=name;
         this.MAC = MAC;
-        this.IP = IP;
-        this.gateway = gateway;
+        this.setIPrefix(ipprefix);
+        this.gatewayIP = gatewayIP;
+        this.gateway = null;
+    }
+
+    public void setIPrefix(String ipprefix){
+        this.IPPrefix = ipprefix;
+        this.IP = ipprefix.substring(0,ipprefix.indexOf("/"));
+    }
+
+    public String getIP(){
+        return IP;
+    }
+
+    public String getIPPrefix(){
+        return IPPrefix;
     }
 
     public String toString(){
-        return "Name:"+name+" MAC:"+MAC+" IP:"+IP+" gateway:"+gateway;
+        return "Name:"+name+" MAC:"+MAC+" IP/Prefix:"+IPPrefix+" gatewayIP:"+gatewayIP;
     }
 }

@@ -7,6 +7,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.util.List;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.Optional;
 
 public class Parser{
     private List<ITFNetworkElement> netElements;
@@ -22,7 +25,6 @@ public class Parser{
 		if(!fullPath)
 			fileName = buildDefaultPath(fileName);
 
-        //TODO: create individual list of Nodes and Routers to turn typed search faster
         this.netElements = new ArrayList<ITFNetworkElement>();
 
         FileReader fr = new FileReader(new File(fileName));
@@ -58,6 +60,8 @@ public class Parser{
             line = br.readLine();
         }
         br.close();
+
+        tuneNetwork();
 	}
 
 	private String buildDefaultPath(String fileName){
@@ -83,7 +87,7 @@ public class Parser{
                     TFPort port = new TFPort();
                     port.number=pNumber;
                     port.MAC=st.nextToken().trim();
-                    port.IP = st.nextToken().trim();
+                    port.setIPrefix(st.nextToken().trim());
                     ((TFRouter)element).addPort(port);
                     pNumber++;
                 }
@@ -93,22 +97,18 @@ public class Parser{
                 String netDest =st.nextToken().trim();
                 String nextHop =st.nextToken().trim();
                 int portNumber=Integer.parseInt(st.nextToken().trim());
-                //TODO: look at netElements declaration ToDo
-                for (ITFNetworkElement e : this.netElements)
-                    if(e instanceof TFRouter){
-                        TFRouter router = (TFRouter)e;
-                        if(router.name.equals(routerName)){
-                            TFPort port = router.getPortByNumber(portNumber);
-                            if(port!=null){
-                                TFRouterTableEntry entry = new TFRouterTableEntry();
-                                entry.netDest = netDest;
-                                //TODO: yet at individual lists, here could search for a Node, to store a object, see TFRouterTableEntry ToDo
-                                entry.nextHop = nextHop;
-                                entry.port = port;
-                                router.addTableEntry(entry);
-                            }
-                        }
+                TFRouter router = getRouterByName(routerName);
+                if(router != null){
+                    TFPort port = router.getPortByNumber(portNumber);
+                    if(port!=null){
+                        TFRouterTableEntry entry = new TFRouterTableEntry();
+                        entry.netDest = netDest;
+                        //TODO: yet at individual lists, here could search for a Node, to store a object, see TFRouterTableEntry ToDo
+                        entry.nextHop = nextHop;
+                        entry.port = port;
+                        router.addTableEntry(entry);
                     }
+                }
                 break;
             default:
                 throw new Exception("Error reading file.");
@@ -121,5 +121,39 @@ public class Parser{
         if(netElements==null)
             netElements = new ArrayList<ITFNetworkElement>();
         return netElements;
+    }
+
+    public void tuneNetwork(){
+        for (ITFNetworkElement ele : netElements) {
+            if(ele instanceof TFNode){
+                ((TFNode)ele).gateway = getGatewayByIP(((TFNode)ele).gatewayIP);
+            }
+        }
+    }
+
+    private TFRouter getGatewayByIP(String ip){
+        List<TFRouter> routers = getRouters();
+        for (TFRouter r : routers)
+            if(r.hasIP(ip))
+                return r;
+        return null;
+    }
+
+    private List<TFRouter> getRouters(){
+        return netElements
+                .stream()
+                .filter(e -> e instanceof TFRouter)
+                .map(e -> (TFRouter) e)
+                .collect(Collectors.toList());
+    }
+
+
+    private TFRouter getRouterByName(String name){
+        Optional<ITFNetworkElement> opt = netElements
+                                            .stream()
+                                            .filter(e -> e instanceof TFRouter && ((TFRouter)e).name.equals(name)).findFirst();
+        if(opt.isPresent())
+            return (TFRouter)opt.get();
+        return null;
     }
 }

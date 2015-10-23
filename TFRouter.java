@@ -46,4 +46,11 @@ public class TFRouter extends ITFNetworkElement {
         //TODO: validate port?
         routertable.add(newEntry);
     }
+
+    public boolean hasIP(String ip){
+        for (TFPort p : ports)
+            if(p.getIP().equals(ip))
+                return true;
+        return false;
+    }
 }
