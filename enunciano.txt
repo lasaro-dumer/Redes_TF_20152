@@ -3,7 +3,10 @@ TRABALHO FINAL DE REDES DE COMPUTADORES I - 2015/2
 
 Prazo máximo para entrega do trabalho (pelo Moodle): 15/11 às 23:55
 
-O trabalho consiste em desenvolver um simulador de rede. O simulador deve receber como parâmetros de execução o nome de um arquivo de descrição de topologia (conforme formato especificado), um comando (ping ou traceroute), um nó origem e um nó destino. O simulador deve apresentar na saída as mensagens enviadas pelos nós e roteadores da topologia conforme o formato estabelecido.
+O trabalho consiste em desenvolver um simulador de rede. O simulador deve receber como parâmetros de execução o nome de um
+arquivo de descrição de topologia (conforme formato especificado), um comando (ping ou traceroute), um nó origem e um
+nó destino. O simulador deve apresentar na saída as mensagens enviadas pelos nós e roteadores da topologia conforme o
+formato estabelecido.
 
 Formato do arquivo de descrição de topologia
 #NODE
@@ -72,18 +75,24 @@ Detalhes para construção do simulador:
 - TTL inicial dos pacotes IP deve ser igual a 8
 - o simulador deverá suportar o uso de subredes na composição da topologia
 - a topologia poderá apresentar loops de roteamento
-- o simulador deve ser executado a partir de um terminal por linha de comando de acordo com o exemplo apresentado - não deve ser necessário utilizar uma IDE para executar o simulador!!!
+- o simulador deve ser executado a partir de um terminal por linha de comando de acordo com o exemplo apresentado -
+    não deve ser necessário utilizar uma IDE para executar o simulador!!!
 - o simulador pode ser implementado em qualquer linguagem
 - a entrada e saída devem respeitar EXATAMENTE os formatos apresentados
 
 Itens a serem entregues:
 - código fonte e executável
-- relatório (em pdf) contendo: (i) detalhes de implementação (linguagem, classes, principais métodos); (ii) descrição de como utilizar o simulador; (iii) limitações do simulador implementado e dificuldades de implementação; (iv) exemplo de execução do ping e traceroute com 1 topologia composta por no mínimo 3 roteadores
+- relatório (em pdf) contendo:
+(i) detalhes de implementação (linguagem, classes, principais métodos);
+(ii) descrição de como utilizar o simulador;
+(iii) limitações do simulador implementado e dificuldades de implementação;
+(iv) exemplo de execução do ping e traceroute com 1 topologia composta por no mínimo 3 roteadores
 
 OBSERVAÇÕES
 - O trabalho deve ser realizado em grupos de no máximo 2 alunos.
 - Não serão aceitos trabalhos atrasados e/ou enviados por e-mail.
 - Trabalhos que não compilam ou que não executam não serão avaliados.
-- Todos os trabalhos serão analisados e comparados. Caso seja identificada cópia de trabalhos, todos os trabalhos envolvidos receberão nota ZERO!
+- Todos os trabalhos serão analisados e comparados. Caso seja identificada cópia de trabalhos, todos os trabalhos
+    envolvidos receberão nota ZERO!
 
 Última atualização: terça, 13 Out 2015, 17:18
