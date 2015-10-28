@@ -147,7 +147,6 @@ public class Parser{
                 .collect(Collectors.toList());
     }
 
-
     private TFRouter getRouterByName(String name){
         Optional<ITFNetworkElement> opt = netElements
                                             .stream()
