@@ -12,6 +12,8 @@ public class TFNode extends ITFNetworkElement {
         this.setIPrefix(ipprefix);
         this.gatewayIP = gatewayIP;
         this.gateway = null;
+        this.arpMACResponse = this.MAC;
+        this.arpIPResponse = this.getIP();
     }
 
     public void setIPrefix(String ipprefix){

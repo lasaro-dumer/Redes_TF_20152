@@ -42,6 +42,13 @@ public class TFRouter extends ITFNetworkElement {
         return null;
     }
 
+    public TFPort getPortByIP(String ip){
+        for (TFPort p : ports)
+            if(p.getIP().equals(ip))
+                return p;
+        return null;
+    }
+
     public void addTableEntry(TFRouterTableEntry newEntry){
         //TODO: validate port?
         routertable.add(newEntry);
@@ -52,5 +59,16 @@ public class TFRouter extends ITFNetworkElement {
             if(p.getIP().equals(ip))
                 return true;
         return false;
+    }
+
+    public ARPPackage createARPRequest(int portNumber,String IP_dst){
+        TFPort port = getPortByNumber(portNumber);
+        return new ARPPackage(port.MAC,port.getIP(),IP_dst);
+    }
+    public ARPPackage doARPRequest(ARPPackage request){
+        TFPort port = getPortByIP(request.IP_dst);
+        arpMACResponse = port.MAC;
+        arpIPResponse = port.getIP();
+        return super.doARPRequest(request);
     }
 }

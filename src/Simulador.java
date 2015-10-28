@@ -35,24 +35,41 @@ public class Simulador{
 			Parser p = new Parser();
 			p.parseFile(filename,!example);
 			List<ITFNetworkElement> netElements = p.getNetworkElements();
-			for (ITFNetworkElement e : netElements) {
-				System.out.println(e.toString());
-			}
-			System.out.println("Selecting nodes only");
-			List<TFNode> nodes = netElements
-								.stream()
-								.filter(e -> e instanceof TFNode && ((TFNode)e).name.equals("n1"))
-								.map(e -> (TFNode) e)
-								.collect(Collectors.toList());
-			//System.out.println(nodes.toString());
-			Optional<ITFNetworkElement> opt = netElements.stream().filter(e -> e instanceof TFNode &&
-																				((TFNode)e).name.equals(srcName)).findFirst();
-	        if(opt.isPresent())
+			if(DEBUG)
+				for (ITFNetworkElement e : netElements)
+					System.out.println(e.toString());
+
+			Optional<ITFNetworkElement> opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).name.equals(srcName)).findFirst();
+	        if(opt.isPresent()){
 	            System.out.println("source: "+opt.get().toString());
-	        else
-				System.out.println("source not found");
+				if(!netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).name.equals(srcName)).findFirst().isPresent())
+					throw new Exception("Destination not found");
+				TFNode source = (TFNode)opt.get();
+				//TODO: clean up after tests
+				//Node requesting gateway MAC
+				ARPPackage request = new ARPPackage(source.MAC,source.getIP(),source.gatewayIP);
+				ARPPackage response = source.gateway.doARPRequest(request);
+				System.out.println("request:  " + request);
+				System.out.println("response: " + response);
+
+				//Router requesting node MAC
+				TFRouter r1 = source.gateway;//(TFRouter)netElements.stream().filter(e -> e instanceof TFRouter && ((TFRouter)e).name.equals("r1")).findFirst().get();
+				request = r1.createARPRequest(0,source.getIP());
+				response = source.doARPRequest(request);
+				System.out.println("request:  " + request);
+				System.out.println("response: " + response);
+
+				switch (command) {
+					case Ping:
+						break;
+					case Trace:
+						break;
+				}
+			}else
+				throw new Exception("Source not found");
 		}catch(Exception ex){
 			System.out.println(ex.toString());
+			ex.printStackTrace();
 		}
 	}
 }
