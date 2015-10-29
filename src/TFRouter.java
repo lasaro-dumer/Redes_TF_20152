@@ -65,10 +65,11 @@ public class TFRouter extends ITFNetworkElement {
         TFPort port = getPortByNumber(portNumber);
         return new ARPPackage(port.MAC,port.getIP(),IP_dst);
     }
+    
     public ARPPackage doARPRequest(ARPPackage request){
         TFPort port = getPortByIP(request.IP_dst);
-        arpMACResponse = port.MAC;
-        arpIPResponse = port.getIP();
+        setARPMACResponse(port.MAC);
+        setARPIPResponse(port.getIP());
         return super.doARPRequest(request);
     }
 }

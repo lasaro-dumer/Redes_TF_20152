@@ -49,6 +49,8 @@ public class Simulador{
 				//Node requesting gateway MAC
 				ARPPackage request = new ARPPackage(source.MAC,source.getIP(),source.gatewayIP);
 				ARPPackage response = source.gateway.doARPRequest(request);
+				source.addArpEntry(response.IP_src,response.MAC_src);
+				System.out.println("arpt="+source.printARPTable());
 				System.out.println("request:  " + request);
 				System.out.println("response: " + response);
 
