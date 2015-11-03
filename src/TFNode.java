@@ -1,35 +1,71 @@
-public class TFNode extends ITFNetworkElement {
-    public String name;
-    public String MAC;
-    private String IP;
-    private String IPPrefix;
+import java.net.UnknownHostException;
+
+public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
+    public int number;
+    private TFNetworkAddress address;
     public TFRouter gateway;
     public String gatewayIP;
 
-    public TFNode(String name,String MAC,String ipprefix,String gatewayIP){
-        this.name=name;
-        this.MAC = MAC;
+    public TFNode(String name,String MAC,String ipprefix,String gatewayIP) throws UnknownHostException{
+        this.address = new TFNetworkAddress();
+        this.setMAC(MAC);
         this.setIPrefix(ipprefix);
+        this.setName(name);
         this.gatewayIP = gatewayIP;
         this.gateway = null;
-        setARPMACResponse(this.MAC);
+        setARPMACResponse(this.getMAC());
         setARPIPResponse(this.getIP());
     }
 
-    public void setIPrefix(String ipprefix){
-        this.IPPrefix = ipprefix;
-        this.IP = ipprefix.substring(0,ipprefix.indexOf("/"));
+    public TFNetworkElement getOwner() {
+        return this;
     }
 
-    public String getIP(){
-        return IP;
+    public void setIPrefix(String ipprefix) throws UnknownHostException {
+        address.setIPrefix(ipprefix);
     }
 
-    public String getIPPrefix(){
-        return IPPrefix;
+    public String getIP() {
+        return address.getIP();
+    }
+
+    public String getIPPrefix() {
+        return address.getIPPrefix();
+    }
+
+    public String getNetwork() {
+        return address.getNetwork();
+    }
+
+    public String getMAC() {
+        return address.getMAC();
+    }
+
+    public void setMAC(String MAC) {
+        address.setMAC(MAC);
+    }
+
+    public String getName() {
+        return address.getName();
+    }
+
+    public void setName(String name) {
+        address.setName(name);
+    }
+
+    public String ping(String dstIP){
+        return ping(dstIP,0);
+    }
+
+    public String ping(String dstIP,int printLevel){
+        StringBuilder sb = new StringBuilder();
+        /*
+
+        */
+        return sb.toString();
     }
 
     public String toString(){
-        return "Name:"+name+" MAC:"+MAC+" IP/Prefix:"+IPPrefix+" gatewayIP:"+gatewayIP;
+        return "Name:"+getName()+" MAC:"+getMAC()+" IP/Prefix:"+getIPPrefix()+" gatewayIP:"+gatewayIP;
     }
 }

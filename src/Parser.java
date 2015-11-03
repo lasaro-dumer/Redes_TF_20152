@@ -10,12 +10,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 public class Parser{
-    private List<ITFNetworkElement> netElements;
+    private List<TFNetworkElement> netElements;
+    private Map<String,TFSwitch> switches;
 
     public Parser(){
-        netElements = new ArrayList<ITFNetworkElement>();
+        netElements = new ArrayList<TFNetworkElement>();
+        switches = new HashMap<String,TFSwitch>();
     }
     public void parseFile(String fileName)  throws FileNotFoundException, IOException, Exception {
         parseFile(fileName,false);
@@ -25,7 +29,7 @@ public class Parser{
 		if(!fullPath)
 			fileName = buildDefaultPath(fileName);
 
-        this.netElements = new ArrayList<ITFNetworkElement>();
+        this.netElements = new ArrayList<TFNetworkElement>();
 
         FileReader fr = new FileReader(new File(fileName));
         BufferedReader br = new BufferedReader(fr);
@@ -53,7 +57,7 @@ public class Parser{
             } else if (line.equals("#routertable")) {
                 type = EntryType.RouterTable;
             } else {
-                ITFNetworkElement element = parseLine(type,line);
+                TFNetworkElement element = parseLine(type,line);
                 if(element!=null)
                     this.netElements.add(element);
             }
@@ -70,26 +74,40 @@ public class Parser{
 	    return file2.getPath();
 	}
 
-    private ITFNetworkElement parseLine(EntryType type,String line) throws Exception{
+    private TFNetworkElement parseLine(EntryType type,String line) throws Exception{
 	    StringTokenizer st = new StringTokenizer(line, ",");
-        ITFNetworkElement element = null;
+        TFNetworkElement element = null;
+        TFSwitch s=null;
         switch (type) {
             case Node:
                 element = new TFNode(st.nextToken().trim(),
                                     st.nextToken().trim(),
                                     st.nextToken().trim(),
                                     st.nextToken().trim());
+                TFNode n = (TFNode)element;
+                s=switches.get(n.getNetwork());
+                if(s == null){
+                    s = new TFSwitch(n.getNetwork());
+                    switches.put(s.getNetwork(),s);
+                }
+                s.addHost(n);
                 break;
             case Router:
                 element = new TFRouter(st.nextToken().trim(),Integer.parseInt(st.nextToken().trim()));
                 int pNumber = 0;
                 while(st.hasMoreElements()){
-                    TFPort port = new TFPort();
+                    TFPort port = new TFPort((TFRouter)element);
                     port.number=pNumber;
-                    port.MAC=st.nextToken().trim();
+                    port.setMAC(st.nextToken().trim());
                     port.setIPrefix(st.nextToken().trim());
                     ((TFRouter)element).addPort(port);
                     pNumber++;
+                    s=switches.get(port.getNetwork());
+                    if(s == null){
+                        s = new TFSwitch(port.getNetwork());
+                        switches.put(s.getNetwork(),s);
+                    }
+                    s.addHost(port);
                 }
                 break;
             case RouterTable:
@@ -117,14 +135,20 @@ public class Parser{
         return element;
     }
 
-    public List<ITFNetworkElement> getNetworkElements(){
+    public List<TFNetworkElement> getNetworkElements(){
         if(netElements==null)
-            netElements = new ArrayList<ITFNetworkElement>();
+            netElements = new ArrayList<TFNetworkElement>();
         return netElements;
     }
 
+    public Map<String,TFSwitch> getSwitches(){
+        if(switches==null)
+            switches = new HashMap<String,TFSwitch>();
+        return switches;
+    }
+
     public void tuneNetwork(){
-        for (ITFNetworkElement ele : netElements) {
+        for (TFNetworkElement ele : netElements) {
             if(ele instanceof TFNode){
                 ((TFNode)ele).gateway = getGatewayByIP(((TFNode)ele).gatewayIP);
             }
@@ -148,7 +172,7 @@ public class Parser{
     }
 
     private TFRouter getRouterByName(String name){
-        Optional<ITFNetworkElement> opt = netElements
+        Optional<TFNetworkElement> opt = netElements
                                             .stream()
                                             .filter(e -> e instanceof TFRouter && ((TFRouter)e).name.equals(name)).findFirst();
         if(opt.isPresent())

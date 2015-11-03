@@ -3,6 +3,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import java.util.Map;
+import java.util.HashMap;
 
 public class Simulador{
 	public static boolean DEBUG=false;
@@ -17,9 +19,10 @@ public class Simulador{
 			else if(args.length > 4){
 				DEBUG = args[4].toLowerCase().equals("debug");
 				example = args.length > 5 && args[5].toLowerCase().equals("true");
-				if(DEBUG)
+				if(DEBUG){
 					for (int i=0;i<args.length;i++)
 						System.out.println("args["+i+"]="+args[i]);
+				}
 			}
 			filename = args[0];
 			sCommand = args[1].toLowerCase();
@@ -34,20 +37,26 @@ public class Simulador{
 
 			Parser p = new Parser();
 			p.parseFile(filename,!example);
-			List<ITFNetworkElement> netElements = p.getNetworkElements();
-			if(DEBUG)
-				for (ITFNetworkElement e : netElements)
+			List<TFNetworkElement> netElements = p.getNetworkElements();
+			if(DEBUG){
+				for (TFNetworkElement e : netElements)
 					System.out.println(e.toString());
-
-			Optional<ITFNetworkElement> opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).name.equals(srcName)).findFirst();
+				Map<String,TFSwitch> switches = p.getSwitches();
+		        for (TFSwitch s : switches.values())
+		            System.out.println(s);
+			}
+			Optional<TFNetworkElement> opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).getName().equals(srcName)).findFirst();
 	        if(opt.isPresent()){
-	            System.out.println("source: "+opt.get().toString());
-				if(!netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).name.equals(srcName)).findFirst().isPresent())
-					throw new Exception("Destination not found");
 				TFNode source = (TFNode)opt.get();
+	            System.out.println("source: "+source.toString());
+				opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).getName().equals(dstName)).findFirst();
+				if(!opt.isPresent())
+					throw new Exception("Destination not found");
+				TFNode destination = (TFNode)opt.get();
+	            System.out.println("destination: "+destination.toString());
 				//TODO: clean up after tests
 				//Node requesting gateway MAC
-				ARPPackage request = new ARPPackage(source.MAC,source.getIP(),source.gatewayIP);
+				ARPPackage request = new ARPPackage(source.getMAC(),source.getIP(),source.gatewayIP);
 				ARPPackage response = source.gateway.doARPRequest(request);
 				source.addArpEntry(response.IP_src,response.MAC_src);
 				System.out.println("arpt="+source.printARPTable());
@@ -63,6 +72,7 @@ public class Simulador{
 
 				switch (command) {
 					case Ping:
+						source.ping(destination.getIP(),5);
 						break;
 					case Trace:
 						break;

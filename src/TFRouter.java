@@ -1,7 +1,7 @@
 import java.util.ArrayList;
 import java.util.List;
 
-public class TFRouter extends ITFNetworkElement {
+public class TFRouter extends TFNetworkElement {
     public String name;
     private int numPorts;
     private List<TFPort> ports;
@@ -63,12 +63,12 @@ public class TFRouter extends ITFNetworkElement {
 
     public ARPPackage createARPRequest(int portNumber,String IP_dst){
         TFPort port = getPortByNumber(portNumber);
-        return new ARPPackage(port.MAC,port.getIP(),IP_dst);
+        return new ARPPackage(port.getMAC(),port.getIP(),IP_dst);
     }
-    
+
     public ARPPackage doARPRequest(ARPPackage request){
         TFPort port = getPortByIP(request.IP_dst);
-        setARPMACResponse(port.MAC);
+        setARPMACResponse(port.getMAC());
         setARPIPResponse(port.getIP());
         return super.doARPRequest(request);
     }
