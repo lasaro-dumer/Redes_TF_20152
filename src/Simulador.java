@@ -48,31 +48,19 @@ public class Simulador{
 			Optional<TFNetworkElement> opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).getName().equals(srcName)).findFirst();
 	        if(opt.isPresent()){
 				TFNode source = (TFNode)opt.get();
-	            System.out.println("source: "+source.toString());
 				opt = netElements.stream().filter(e -> e instanceof TFNode && ((TFNode)e).getName().equals(dstName)).findFirst();
 				if(!opt.isPresent())
 					throw new Exception("Destination not found");
 				TFNode destination = (TFNode)opt.get();
-	            System.out.println("destination: "+destination.toString());
-				//TODO: clean up after tests
-				//Node requesting gateway MAC
-				ARPPackage request = new ARPPackage(source.getMAC(),source.getIP(),source.gatewayIP);
-				ARPPackage response = source.gateway.doARPRequest(request);
-				source.addArpEntry(response.IP_src,response.MAC_src);
-				System.out.println("arpt="+source.printARPTable());
-				System.out.println("request:  " + request);
-				System.out.println("response: " + response);
-
-				//Router requesting node MAC
-				TFRouter r1 = source.gateway;//(TFRouter)netElements.stream().filter(e -> e instanceof TFRouter && ((TFRouter)e).name.equals("r1")).findFirst().get();
-				request = r1.createARPRequest(0,source.getIP());
-				response = source.doARPRequest(request);
-				System.out.println("request:  " + request);
-				System.out.println("response: " + response);
-
+				if(DEBUG){
+					System.out.println("source: "+source.toString());
+		            System.out.println("destination: "+destination.toString());
+				}
+				
 				switch (command) {
 					case Ping:
-						source.ping(destination.getIP(),5);
+						System.out.println("PING:");
+						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),5));
 						break;
 					case Trace:
 						break;

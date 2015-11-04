@@ -61,6 +61,13 @@ public class TFRouter extends TFNetworkElement {
         return false;
     }
 
+    public TFRouterTableEntry getRouteTo(String ip){
+        for(TFRouterTableEntry r : routertable)
+            if(r.netDest.equals(ip))
+                return r;
+        return null;
+    }
+
     public ARPPackage createARPRequest(int portNumber,String IP_dst){
         TFPort port = getPortByNumber(portNumber);
         return new ARPPackage(port.getMAC(),port.getIP(),IP_dst);

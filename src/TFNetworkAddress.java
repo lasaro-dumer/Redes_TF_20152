@@ -7,6 +7,7 @@ public class TFNetworkAddress implements ITFNetworkAddress{
     private String name;
     private String IPPrefix;
     private String network;
+    private int netCIDR;
 
     public TFNetworkElement getOwner(){
         throw new UnsupportedOperationException();
@@ -15,7 +16,8 @@ public class TFNetworkAddress implements ITFNetworkAddress{
     public void setIPrefix(String ipprefix) throws UnknownHostException{
         this.IPPrefix = ipprefix;
         this.IP = ipprefix.substring(0, ipprefix.indexOf("/"));
-        this.network = extractNetwork(ipprefix);
+        this.netCIDR = Integer.parseInt(ipprefix.substring(ipprefix.indexOf("/")+1));
+        this.network = extractNetwork(IP,netCIDR);
     }
 
     public String getIP() {
@@ -24,6 +26,10 @@ public class TFNetworkAddress implements ITFNetworkAddress{
 
     public String getIPPrefix() {
         return IPPrefix;
+    }
+
+    public int getNetCIDR(){
+        return netCIDR;
     }
 
     public String getNetwork() {
@@ -61,6 +67,21 @@ public class TFNetworkAddress implements ITFNetworkAddress{
             binarRedeIP += s1;
         }
         return binarRedeIP.substring(0,cidr);
+    }
+
+    public boolean isSameNetwork(String otherIP,int otherCIDR){
+        try{
+            return isSameNetwork(getIP(),getNetCIDR(),otherIP,otherCIDR);
+        }catch(Exception e){
+
+        }
+        return false;
+    }
+
+    public static boolean isSameNetwork(String firstIP,int firstCIDR,String otherIP,int otherCIDR) throws UnknownHostException{
+        String firstNetwork = extractNetwork(firstIP,firstCIDR);
+        String otherNetwork = extractNetwork(otherIP,otherCIDR);
+        return firstNetwork.equals(otherNetwork);
     }
 
     public static String binaryIPtoStringIPv4(String binaryIP) {

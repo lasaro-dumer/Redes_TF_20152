@@ -36,6 +36,14 @@ public class TFSwitch {
         return null;
     }
 
+    public ARPPackage doARPRequest(ARPPackage request){
+        ITFNetworkAddress dst = getHostByIP(request.IP_dst);
+        if(dst!=null)
+            if(dst instanceof TFNode)
+                return ((TFNode)dst).doARPRequest(request);
+        return null;
+    }
+
     public String toString(){
         String net = getNetwork() + "00000000000000000000000000000000";
         net = net.substring(0,32);

@@ -5,6 +5,7 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
     private TFNetworkAddress address;
     public TFRouter gateway;
     public String gatewayIP;
+    private TFSwitch LAN;
 
     public TFNode(String name,String MAC,String ipprefix,String gatewayIP) throws UnknownHostException{
         this.address = new TFNetworkAddress();
@@ -13,6 +14,7 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
         this.setName(name);
         this.gatewayIP = gatewayIP;
         this.gateway = null;
+        this.LAN = null;
         setARPMACResponse(this.getMAC());
         setARPIPResponse(this.getIP());
     }
@@ -31,6 +33,10 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
 
     public String getIPPrefix() {
         return address.getIPPrefix();
+    }
+
+    public int getNetCIDR(){
+        return address.getNetCIDR();
     }
 
     public String getNetwork() {
@@ -53,15 +59,58 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
         address.setName(name);
     }
 
-    public String ping(String dstIP){
-        return ping(dstIP,0);
+    public boolean isSameNetwork(String otherIP,int otherCIDR){
+        return address.isSameNetwork(otherIP,otherCIDR);
     }
 
-    public String ping(String dstIP,int printLevel){
-        StringBuilder sb = new StringBuilder();
-        /*
+    public TFSwitch getLAN() {
+        if(LAN == null)
+            LAN = new TFSwitch(getNetwork());
+        return LAN;
+    }
 
-        */
+    public void setLAN(TFSwitch lan) {
+        LAN = lan;
+    }
+
+    public String ping(String dstIP,int dstCIDR){
+        return ping(dstIP,dstCIDR,0);
+    }
+
+    public String ping(String dstIP,int dstCIDR,int printLevel){
+        StringBuilder sb = new StringBuilder();
+        String MAC_dst = this.searchMAC(dstIP);
+        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);
+        System.out.println("sameNetwork="+sameNetwork);
+        if(MAC_dst == null){
+            ARPPackage arpRequest = null;
+            ARPPackage arpResponse = null;
+            if(sameNetwork){
+                arpRequest = new ARPPackage(getMAC(),getIP(),dstIP);
+                arpResponse = getLAN().doARPRequest(arpRequest);
+            }else{
+                arpRequest = new ARPPackage(getMAC(),getIP(),gatewayIP);
+                arpResponse = gateway.doARPRequest(arpRequest);
+            }
+            if(arpResponse!=null){
+                sb.append(arpRequest.toString()+"\n");
+                sb.append(arpResponse.toString()+"\n");
+            }
+            //TODO: ICMP
+            ICMPPackage icmpRequest = null;
+            String icmpResponse = null;//i think that a string is more suitable to return, as we need only the 'log'
+            if(sameNetwork){
+                //icmpRequest =
+                //icmpResponse = getLAN().doICMPRequest(icmpRequest);
+            }else{
+                //icmpRequest =
+                //icmpResponse = gateway.doICMPRequest(icmpRequest);
+            }
+            if(icmpResponse!=null){
+                sb.append(icmpRequest.toString()+"\n");
+                sb.append(icmpResponse.toString()+"\n");
+            }
+        }
         return sb.toString();
     }
 

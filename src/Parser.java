@@ -91,6 +91,7 @@ public class Parser{
                     switches.put(s.getNetwork(),s);
                 }
                 s.addHost(n);
+                n.setLAN(s);
                 break;
             case Router:
                 element = new TFRouter(st.nextToken().trim(),Integer.parseInt(st.nextToken().trim()));
@@ -108,6 +109,7 @@ public class Parser{
                         switches.put(s.getNetwork(),s);
                     }
                     s.addHost(port);
+                    
                 }
                 break;
             case RouterTable:

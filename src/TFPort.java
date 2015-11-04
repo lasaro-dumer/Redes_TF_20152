@@ -24,10 +24,14 @@ public class TFPort implements ITFNetworkAddress{
         return address.getIPPrefix();
     }
 
+    public int getNetCIDR(){
+        return address.getNetCIDR();
+    }
+
     public String getNetwork() {
         return address.getNetwork();
     }
-    
+
     public String getMAC() {
         return address.getMAC();
     }
@@ -42,6 +46,10 @@ public class TFPort implements ITFNetworkAddress{
 
     public void setName(String name) {
         address.setName(name);
+    }
+
+    public boolean isSameNetwork(String otherIP,int otherCIDR){
+        return address.isSameNetwork(otherIP,otherCIDR);
     }
 
     public String toString() {
