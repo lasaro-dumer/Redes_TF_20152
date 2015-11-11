@@ -69,6 +69,16 @@ public class TFNetworkAddress implements ITFNetworkAddress{
         return binarRedeIP.substring(0,cidr);
     }
 
+    public static String extractNetworkAsIPv4(String ip,int cidr) throws UnknownHostException{
+        String binarRedeIP = extractNetwork(ip,cidr)+ "00000000000000000000000000000000";
+        return binaryIPtoStringIPv4(binarRedeIP.substring(0,32));
+    }
+
+    public static String getNetworkAsIPv4(String ip) throws UnknownHostException{
+        String binarRedeIP = ip+ "00000000000000000000000000000000";
+        return binaryIPtoStringIPv4(binarRedeIP.substring(0,32));
+    }
+
     public boolean isSameNetwork(String otherIP,int otherCIDR){
         try{
             return isSameNetwork(getIP(),getNetCIDR(),otherIP,otherCIDR);
@@ -80,6 +90,12 @@ public class TFNetworkAddress implements ITFNetworkAddress{
 
     public static boolean isSameNetwork(String firstIP,int firstCIDR,String otherIP,int otherCIDR) throws UnknownHostException{
         String firstNetwork = extractNetwork(firstIP,firstCIDR);
+        String otherNetwork = extractNetwork(otherIP,otherCIDR);
+        return firstNetwork.equals(otherNetwork);
+    }
+
+    public static boolean isSameNetwork(String firstIPPrefix,String otherIP,int otherCIDR) throws UnknownHostException{
+        String firstNetwork = extractNetwork(firstIPPrefix);
         String otherNetwork = extractNetwork(otherIP,otherCIDR);
         return firstNetwork.equals(otherNetwork);
     }

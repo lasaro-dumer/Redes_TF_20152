@@ -12,6 +12,7 @@ import java.util.stream.Collectors;
 import java.util.Optional;
 import java.util.Map;
 import java.util.HashMap;
+import java.net.UnknownHostException;
 
 public class Parser{
     private List<TFNetworkElement> netElements;
@@ -87,7 +88,7 @@ public class Parser{
                 TFNode n = (TFNode)element;
                 s=switches.get(n.getNetwork());
                 if(s == null){
-                    s = new TFSwitch(n.getNetwork());
+                    s = new TFSwitch(n.getNetwork(),n.getNetCIDR());
                     switches.put(s.getNetwork(),s);
                 }
                 s.addHost(n);
@@ -105,11 +106,11 @@ public class Parser{
                     pNumber++;
                     s=switches.get(port.getNetwork());
                     if(s == null){
-                        s = new TFSwitch(port.getNetwork());
+                        s = new TFSwitch(port.getNetwork(),port.getNetCIDR());
                         switches.put(s.getNetwork(),s);
                     }
                     s.addHost(port);
-                    
+
                 }
                 break;
             case RouterTable:
@@ -121,10 +122,7 @@ public class Parser{
                 if(router != null){
                     TFPort port = router.getPortByNumber(portNumber);
                     if(port!=null){
-                        TFRouterTableEntry entry = new TFRouterTableEntry();
-                        entry.netDest = netDest;
-                        //TODO: yet at individual lists, here could search for a Node, to store a object, see TFRouterTableEntry ToDo
-                        entry.nextHop = nextHop;
+                        TFRouterTableEntry entry = new TFRouterTableEntry(netDest,nextHop,portNumber);
                         entry.port = port;
                         router.addTableEntry(entry);
                     }
@@ -149,10 +147,12 @@ public class Parser{
         return switches;
     }
 
-    public void tuneNetwork(){
+    public void tuneNetwork() throws UnknownHostException{
         for (TFNetworkElement ele : netElements) {
             if(ele instanceof TFNode){
                 ((TFNode)ele).gateway = getGatewayByIP(((TFNode)ele).gatewayIP);
+            }else if(ele instanceof TFRouter){
+                ((TFRouter)ele).tuneRouterTable(getSwitches());
             }
         }
     }

@@ -56,10 +56,9 @@ public class Simulador{
 					System.out.println("source: "+source.toString());
 		            System.out.println("destination: "+destination.toString());
 				}
-				
+
 				switch (command) {
 					case Ping:
-						System.out.println("PING:");
 						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),5));
 						break;
 					case Trace:

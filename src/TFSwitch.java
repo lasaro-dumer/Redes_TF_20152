@@ -3,13 +3,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
 import java.util.Optional;
+import java.net.UnknownHostException;
 
 public class TFSwitch {
     public String network;
+    public int CIDR;
     private List<ITFNetworkAddress> hosts;
 
-    public TFSwitch(String network){
+    public TFSwitch(String network,int CIDR){
         this.network = network;
+        this.CIDR = CIDR;
         this.hosts = new ArrayList<ITFNetworkAddress>();
     }
 
@@ -44,13 +47,22 @@ public class TFSwitch {
         return null;
     }
 
+    public ICMPPackage doICMPRequest(ICMPPackage request){
+        ITFNetworkAddress dst = getHostByIP(request.IP_dst);
+        return new ICMPPackage(ICMPPackage.ICMPType.ICMPEchoReply,dst.getMAC(),request.MAC_src,dst.getIP(),dst.getNetCIDR(),request.IP_src,request.CIDR_src,8);
+    }
+
+    public String getNetworkAsIPv4CIDR() throws UnknownHostException{
+        return TFNetworkAddress.getNetworkAsIPv4(getNetwork())+"/"+this.CIDR;
+    }
+
     public String toString(){
-        String net = getNetwork() + "00000000000000000000000000000000";
-        net = net.substring(0,32);
         String hs = "";
         for (ITFNetworkAddress host : hosts) {
             hs+="\n\t"+host;
         }
-        return "switch["+TFNetworkAddress.binaryIPtoStringIPv4(net)+"]"+hs;
+        String net = "ERROR";
+        try{net = getNetworkAsIPv4CIDR();}catch(Exception e){}
+        return "switch["+net+"]"+hs;
     }
 }

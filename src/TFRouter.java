@@ -1,5 +1,9 @@
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
+import java.util.HashMap;
+import java.net.UnknownHostException;
 
 public class TFRouter extends TFNetworkElement {
     public String name;
@@ -54,6 +58,14 @@ public class TFRouter extends TFNetworkElement {
         routertable.add(newEntry);
     }
 
+    public void tuneRouterTable(Map<String,TFSwitch> switches) throws UnknownHostException{
+        for(TFRouterTableEntry r : routertable){
+            String binaryIP = TFNetworkAddress.extractNetwork(r.getNetworkIPPrefix());
+            TFSwitch e = switches.get(binaryIP);
+            r.setLAN(e);
+        }
+    }
+
     public boolean hasIP(String ip){
         for (TFPort p : ports)
             if(p.getIP().equals(ip))
@@ -61,10 +73,12 @@ public class TFRouter extends TFNetworkElement {
         return false;
     }
 
-    public TFRouterTableEntry getRouteTo(String ip){
-        for(TFRouterTableEntry r : routertable)
-            if(r.netDest.equals(ip))
+    public TFRouterTableEntry getRouteTo(String ip) throws UnknownHostException{
+        for(TFRouterTableEntry r : routertable){
+            if(r.getLAN().getNetworkAsIPv4CIDR().equals(ip)){
                 return r;
+            }
+        }
         return null;
     }
 
@@ -78,5 +92,50 @@ public class TFRouter extends TFNetworkElement {
         setARPMACResponse(port.getMAC());
         setARPIPResponse(port.getIP());
         return super.doARPRequest(request);
+    }
+
+    public ICMPPackage doICMPRequest(ICMPPackage request) throws Exception{
+        String dstNetwork = TFNetworkAddress.extractNetworkAsIPv4(request.IP_dst,request.CIDR_dst);
+        TFRouterTableEntry route = getRouteTo(dstNetwork+"/"+request.CIDR_dst);
+        ITFNetworkAddress dst = route.port;
+        boolean sameNetwork = dst.isSameNetwork(request.IP_dst,request.CIDR_dst);
+        String MAC_dst = this.searchMAC(request.IP_dst);
+        ARPPackage arpRequest = null;
+        ARPPackage arpResponse = null;
+        if(MAC_dst == null){
+            if(sameNetwork){
+                arpRequest = new ARPPackage(dst.getMAC(),dst.getIP(),request.IP_dst);
+                arpResponse = route.getLAN().doARPRequest(arpRequest);
+            }else{
+                throw new Exception("router-to-router not implemented yet");
+                //arpRequest = new ARPPackage(getMAC(),getIP(),gatewayIP);
+                //arpResponse = gateway.doARPRequest(arpRequest);
+            }
+            if(arpResponse!=null){
+                MAC_dst = arpResponse.MAC_src;
+            }
+        }
+
+        if(MAC_dst!=null){
+            int newTTL = request.TTL - 1;
+            ICMPPackage icmpRequest = null;
+            ICMPPackage icmpResponse = null;//i think that a string is more suitable to return, as we need only the 'log'
+            if(sameNetwork){
+                icmpRequest = new ICMPPackage(dst.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
+                icmpRequest.TTL = newTTL;
+                icmpResponse = route.getLAN().doICMPRequest(icmpRequest);
+            }else{
+                //icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
+                //icmpResponse = gateway.doICMPRequest(icmpRequest);
+            }
+            ICMPPackage response = new ICMPPackage(ICMPPackage.ICMPType.ICMPEchoReply,request.MAC_dst,request.MAC_src,icmpResponse.IP_src,icmpResponse.CIDR_src,icmpResponse.IP_dst,icmpResponse.CIDR_dst,8);
+            response.log(arpRequest.toString());
+            response.log(arpResponse.toString());
+            response.log(icmpRequest.toString());
+            response.log(icmpResponse.toString());
+            response.TTL = icmpResponse.TTL - 1;
+            return response;
+        }
+        return null;
     }
 }

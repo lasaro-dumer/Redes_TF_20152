@@ -65,7 +65,7 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
 
     public TFSwitch getLAN() {
         if(LAN == null)
-            LAN = new TFSwitch(getNetwork());
+            LAN = new TFSwitch(getNetwork(),getNetCIDR());
         return LAN;
     }
 
@@ -73,15 +73,14 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
         LAN = lan;
     }
 
-    public String ping(String dstIP,int dstCIDR){
+    public String ping(String dstIP,int dstCIDR) throws Exception{
         return ping(dstIP,dstCIDR,0);
     }
 
-    public String ping(String dstIP,int dstCIDR,int printLevel){
+    public String ping(String dstIP,int dstCIDR,int printLevel) throws Exception{
         StringBuilder sb = new StringBuilder();
         String MAC_dst = this.searchMAC(dstIP);
-        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);
-        System.out.println("sameNetwork="+sameNetwork);
+        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);        
         if(MAC_dst == null){
             ARPPackage arpRequest = null;
             ARPPackage arpResponse = null;
@@ -95,23 +94,28 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
             if(arpResponse!=null){
                 sb.append(arpRequest.toString()+"\n");
                 sb.append(arpResponse.toString()+"\n");
-            }
-            //TODO: ICMP
-            ICMPPackage icmpRequest = null;
-            String icmpResponse = null;//i think that a string is more suitable to return, as we need only the 'log'
-            if(sameNetwork){
-                //icmpRequest =
-                //icmpResponse = getLAN().doICMPRequest(icmpRequest);
-            }else{
-                //icmpRequest =
-                //icmpResponse = gateway.doICMPRequest(icmpRequest);
-            }
-            if(icmpResponse!=null){
-                sb.append(icmpRequest.toString()+"\n");
-                sb.append(icmpResponse.toString()+"\n");
+                MAC_dst = arpResponse.MAC_src;
             }
         }
-        return sb.toString();
+
+        if(MAC_dst!=null){
+            ICMPPackage icmpRequest = null;
+            ICMPPackage icmpResponse = null;
+            if(sameNetwork){
+                icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
+                icmpResponse = getLAN().doICMPRequest(icmpRequest);
+            }else{
+                icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
+                icmpResponse = gateway.doICMPRequest(icmpRequest);
+            }
+            if(icmpRequest!=null)
+                sb.append(icmpRequest.toString()+"\n");
+            if(icmpResponse!=null)
+                sb.append(icmpResponse.toString()+"\n");
+            return sb.toString();
+        }else {
+            throw new Exception("Ping failed");
+        }
     }
 
     public String toString(){
