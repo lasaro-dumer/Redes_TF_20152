@@ -3,6 +3,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.HashMap;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.Optional;
 import java.net.UnknownHostException;
 
 public class TFRouter extends TFNetworkElement {
@@ -58,11 +61,15 @@ public class TFRouter extends TFNetworkElement {
         routertable.add(newEntry);
     }
 
-    public void tuneRouterTable(Map<String,TFSwitch> switches) throws UnknownHostException{
+    public void tuneRouterTable(Map<String,TFSwitch> switches,List<TFRouter> routers) throws UnknownHostException{
         for(TFRouterTableEntry r : routertable){
-            String binaryIP = TFNetworkAddress.extractNetwork(r.getNetworkIPPrefix());
+            String ipprefix = (r.getNextHopIPPrefix().equals("0.0.0.0")?r.getNetworkIPPrefix():r.getNextHopIPPrefix());
+            String binaryIP = TFNetworkAddress.extractNetwork(ipprefix);
             TFSwitch e = switches.get(binaryIP);
             r.setLAN(e);
+            Optional<TFRouter> opt = routers.stream().filter(rt -> rt.hasIP(r.getNextHopIP())).findFirst();
+            if(opt.isPresent())
+                r.setNextHop(opt.get());
         }
     }
 
@@ -75,7 +82,7 @@ public class TFRouter extends TFNetworkElement {
 
     public TFRouterTableEntry getRouteTo(String ip) throws UnknownHostException{
         for(TFRouterTableEntry r : routertable){
-            if(r.getLAN().getNetworkAsIPv4CIDR().equals(ip)){
+            if(r.getNetworkIPPrefix().equals(ip)){
                 return r;
             }
         }
@@ -97,19 +104,18 @@ public class TFRouter extends TFNetworkElement {
     public ICMPPackage doICMPRequest(ICMPPackage request) throws Exception{
         String dstNetwork = TFNetworkAddress.extractNetworkAsIPv4(request.IP_dst,request.CIDR_dst);
         TFRouterTableEntry route = getRouteTo(dstNetwork+"/"+request.CIDR_dst);
-        ITFNetworkAddress dst = route.port;
-        boolean sameNetwork = dst.isSameNetwork(request.IP_dst,request.CIDR_dst);
+        ITFNetworkAddress port = route.port;
+        boolean sameNetwork = port.isSameNetwork(request.IP_dst,request.CIDR_dst);
         String MAC_dst = this.searchMAC(request.IP_dst);
         ARPPackage arpRequest = null;
         ARPPackage arpResponse = null;
         if(MAC_dst == null){
             if(sameNetwork){
-                arpRequest = new ARPPackage(dst.getMAC(),dst.getIP(),request.IP_dst);
+                arpRequest = new ARPPackage(port.getMAC(),port.getIP(),request.IP_dst);
                 arpResponse = route.getLAN().doARPRequest(arpRequest);
             }else{
-                throw new Exception("router-to-router not implemented yet");
-                //arpRequest = new ARPPackage(getMAC(),getIP(),gatewayIP);
-                //arpResponse = gateway.doARPRequest(arpRequest);
+                arpRequest = new ARPPackage(port.getMAC(),port.getIP(),route.getNextHopIP());
+                arpResponse = route.getLAN().doARPRequest(arpRequest);
             }
             if(arpResponse!=null){
                 MAC_dst = arpResponse.MAC_src;
@@ -119,12 +125,20 @@ public class TFRouter extends TFNetworkElement {
         if(MAC_dst!=null){
             int newTTL = request.TTL - 1;
             ICMPPackage icmpRequest = null;
-            ICMPPackage icmpResponse = null;//i think that a string is more suitable to return, as we need only the 'log'
+            ICMPPackage icmpResponse = null;
             if(sameNetwork){
-                icmpRequest = new ICMPPackage(dst.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
+                icmpRequest = new ICMPPackage(port.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
                 icmpRequest.TTL = newTTL;
                 icmpResponse = route.getLAN().doICMPRequest(icmpRequest);
             }else{
+                icmpRequest = new ICMPPackage(port.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
+                icmpRequest.TTL = newTTL;
+                //System.out.println("icmpRequest=  "+icmpRequest);
+                //System.out.println("port="+port);
+                //System.out.println("nexthop:"+route.getNextHop());
+                icmpResponse = route.getNextHop().doICMPRequest(icmpRequest);
+                //System.out.println("icmpResponse= "+icmpResponse);
+                //throw new Exception("router-to-router not implemented yet");
                 //icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
                 //icmpResponse = gateway.doICMPRequest(icmpRequest);
             }
@@ -136,6 +150,6 @@ public class TFRouter extends TFNetworkElement {
             response.TTL = icmpResponse.TTL - 1;
             return response;
         }
-        return null;
+        throw new Exception("Destination unreacheable");
     }
 }

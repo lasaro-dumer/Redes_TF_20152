@@ -39,17 +39,21 @@ public class TFSwitch {
         return null;
     }
 
-    public ARPPackage doARPRequest(ARPPackage request){
+    public ARPPackage doARPRequest(ARPPackage request) throws Exception{
         ITFNetworkAddress dst = getHostByIP(request.IP_dst);
         if(dst!=null)
             if(dst instanceof TFNode)
                 return ((TFNode)dst).doARPRequest(request);
-        return null;
+            else if (dst instanceof TFPort)
+                return ((TFPort)dst).getOwner().doARPRequest(request);
+        throw new Exception("Destination unreacheable");
     }
 
-    public ICMPPackage doICMPRequest(ICMPPackage request){
+    public ICMPPackage doICMPRequest(ICMPPackage request) throws Exception{
         ITFNetworkAddress dst = getHostByIP(request.IP_dst);
-        return new ICMPPackage(ICMPPackage.ICMPType.ICMPEchoReply,dst.getMAC(),request.MAC_src,dst.getIP(),dst.getNetCIDR(),request.IP_src,request.CIDR_src,8);
+        if(dst!=null)
+            return new ICMPPackage(ICMPPackage.ICMPType.ICMPEchoReply,dst.getMAC(),request.MAC_src,dst.getIP(),dst.getNetCIDR(),request.IP_src,request.CIDR_src,8);
+        throw new Exception("Destination unreacheable");
     }
 
     public String getNetworkAsIPv4CIDR() throws UnknownHostException{

@@ -37,11 +37,11 @@ public class TFNetworkAddress implements ITFNetworkAddress{
     }
 
     public String getMAC() {
-        return MAC;
+        return MAC.toUpperCase();
     }
 
     public void setMAC(String MAC) {
-        this.MAC = MAC;
+        this.MAC = MAC.toUpperCase();
     }
 
     public String getName() {

@@ -1,13 +1,16 @@
 public class TFRouterTableEntry {
     private String networkIPPrefix;
+    private String nextHopIPPrefix;
     private String nextHopIP;
     private int portNumber;
     private TFSwitch LAN;
+    private TFRouter nextHop;
     public TFPort port;
 
-    public TFRouterTableEntry(String networkIPPrefix,String nextHopIP,int portNumber){
+    public TFRouterTableEntry(String networkIPPrefix,String nextHopIPPrefix,int portNumber){
         this.networkIPPrefix = networkIPPrefix;
-        this.nextHopIP = nextHopIP;
+        this.nextHopIPPrefix = nextHopIPPrefix;
+        this.nextHopIP = nextHopIPPrefix.equals("0.0.0.0") ? nextHopIPPrefix : nextHopIPPrefix.substring(0, nextHopIPPrefix.indexOf("/"));
         this.portNumber = portNumber;
         this.port = null;
         this.LAN = null;
@@ -21,11 +24,27 @@ public class TFRouterTableEntry {
         LAN = lan;
     }
 
+    public TFRouter getNextHop() {
+        return nextHop;
+    }
+
+    public void setNextHop(TFRouter nextHop) {
+        this.nextHop = nextHop;
+    }
+
     public String getNetworkIPPrefix(){
         return this.networkIPPrefix;
     }
-    
+
+    public String getNextHopIPPrefix(){
+        return this.nextHopIPPrefix;
+    }
+
+    public String getNextHopIP(){
+        return this.nextHopIP;
+    }
+
     public String toString(){
-        return networkIPPrefix +"|"+ nextHopIP +"|"+ portNumber;
+        return networkIPPrefix +"|"+ nextHopIPPrefix +"|"+ portNumber;
     }
 }

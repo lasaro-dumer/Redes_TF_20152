@@ -80,7 +80,7 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
     public String ping(String dstIP,int dstCIDR,int printLevel) throws Exception{
         StringBuilder sb = new StringBuilder();
         String MAC_dst = this.searchMAC(dstIP);
-        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);        
+        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);
         if(MAC_dst == null){
             ARPPackage arpRequest = null;
             ARPPackage arpResponse = null;
@@ -113,9 +113,8 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
             if(icmpResponse!=null)
                 sb.append(icmpResponse.toString()+"\n");
             return sb.toString();
-        }else {
-            throw new Exception("Ping failed");
         }
+        throw new Exception("Destination unreacheable");
     }
 
     public String toString(){

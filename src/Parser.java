@@ -152,7 +152,7 @@ public class Parser{
             if(ele instanceof TFNode){
                 ((TFNode)ele).gateway = getGatewayByIP(((TFNode)ele).gatewayIP);
             }else if(ele instanceof TFRouter){
-                ((TFRouter)ele).tuneRouterTable(getSwitches());
+                ((TFRouter)ele).tuneRouterTable(getSwitches(),getRouters());
             }
         }
     }
