@@ -109,6 +109,11 @@ public class TFRouter extends TFNetworkElement {
         String MAC_dst = this.searchMAC(request.IP_dst);
         ARPPackage arpRequest = null;
         ARPPackage arpResponse = null;
+        int newTTL = request.TTL - 1;
+        if(newTTL<=0){
+            return new ICMPPackage(ICMPPackage.ICMPType.ICMPTimeExceeded,request.MAC_dst,request.MAC_src,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst,8);
+        }
+
         if(MAC_dst == null){
             if(sameNetwork){
                 arpRequest = new ARPPackage(port.getMAC(),port.getIP(),request.IP_dst);
@@ -118,31 +123,21 @@ public class TFRouter extends TFNetworkElement {
                 arpResponse = route.getLAN().doARPRequest(arpRequest);
             }
             if(arpResponse!=null){
+                addArpEntry(arpResponse.IP_src,arpResponse.MAC_src);
                 MAC_dst = arpResponse.MAC_src;
             }
         }
 
         if(MAC_dst!=null){
-            int newTTL = request.TTL - 1;
-            ICMPPackage icmpRequest = null;
+            ICMPPackage icmpRequest = new ICMPPackage(port.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
+            icmpRequest.TTL = newTTL;
             ICMPPackage icmpResponse = null;
             if(sameNetwork){
-                icmpRequest = new ICMPPackage(port.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
-                icmpRequest.TTL = newTTL;
                 icmpResponse = route.getLAN().doICMPRequest(icmpRequest);
             }else{
-                icmpRequest = new ICMPPackage(port.getMAC(),MAC_dst,request.IP_src,request.CIDR_src,request.IP_dst,request.CIDR_dst);
-                icmpRequest.TTL = newTTL;
-                //System.out.println("icmpRequest=  "+icmpRequest);
-                //System.out.println("port="+port);
-                //System.out.println("nexthop:"+route.getNextHop());
                 icmpResponse = route.getNextHop().doICMPRequest(icmpRequest);
-                //System.out.println("icmpResponse= "+icmpResponse);
-                //throw new Exception("router-to-router not implemented yet");
-                //icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
-                //icmpResponse = gateway.doICMPRequest(icmpRequest);
             }
-            ICMPPackage response = new ICMPPackage(ICMPPackage.ICMPType.ICMPEchoReply,request.MAC_dst,request.MAC_src,icmpResponse.IP_src,icmpResponse.CIDR_src,icmpResponse.IP_dst,icmpResponse.CIDR_dst,8);
+            ICMPPackage response = new ICMPPackage(icmpResponse.type,request.MAC_dst,request.MAC_src,icmpResponse.IP_src,icmpResponse.CIDR_src,icmpResponse.IP_dst,icmpResponse.CIDR_dst,8);
             response.log(arpRequest.toString());
             response.log(arpResponse.toString());
             response.log(icmpRequest.toString());

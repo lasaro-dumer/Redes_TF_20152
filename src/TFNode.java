@@ -77,13 +77,13 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
         return ping(dstIP,dstCIDR,0);
     }
 
-    public String ping(String dstIP,int dstCIDR,int printLevel) throws Exception{
-        StringBuilder sb = new StringBuilder();
+    public String ping(String dstIP,int dstCIDR,int initialTTL) throws Exception{
+        StringBuilder log = new StringBuilder();
         String MAC_dst = this.searchMAC(dstIP);
         boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);
+        ARPPackage arpRequest = null;
+        ARPPackage arpResponse = null;
         if(MAC_dst == null){
-            ARPPackage arpRequest = null;
-            ARPPackage arpResponse = null;
             if(sameNetwork){
                 arpRequest = new ARPPackage(getMAC(),getIP(),dstIP);
                 arpResponse = getLAN().doARPRequest(arpRequest);
@@ -92,27 +92,25 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
                 arpResponse = gateway.doARPRequest(arpRequest);
             }
             if(arpResponse!=null){
-                sb.append(arpRequest.toString()+"\n");
-                sb.append(arpResponse.toString()+"\n");
+                addArpEntry(arpResponse.IP_src,arpResponse.MAC_src);
                 MAC_dst = arpResponse.MAC_src;
             }
         }
 
         if(MAC_dst!=null){
-            ICMPPackage icmpRequest = null;
+            ICMPPackage icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
+            icmpRequest.TTL = initialTTL;
             ICMPPackage icmpResponse = null;
             if(sameNetwork){
-                icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
                 icmpResponse = getLAN().doICMPRequest(icmpRequest);
             }else{
-                icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
                 icmpResponse = gateway.doICMPRequest(icmpRequest);
             }
-            if(icmpRequest!=null)
-                sb.append(icmpRequest.toString()+"\n");
-            if(icmpResponse!=null)
-                sb.append(icmpResponse.toString()+"\n");
-            return sb.toString();
+            log.append(arpRequest.toString()+"\n");
+            log.append(arpResponse.toString()+"\n");
+            log.append(icmpRequest.toString()+"\n");
+            log.append(icmpResponse.toString());
+            return log.toString();
         }
         throw new Exception("Destination unreacheable");
     }

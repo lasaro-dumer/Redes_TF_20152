@@ -14,6 +14,7 @@ public class Simulador{
 			SimCommand command;
 			String sCommand,srcName,dstName;
 			boolean example = false;
+			int initialTTL = 8;
 			if(args.length<4)
 				throw new Exception("Invalid arguments");
 			else if(args.length > 4){
@@ -59,7 +60,7 @@ public class Simulador{
 
 				switch (command) {
 					case Ping:
-						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),5));
+						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),initialTTL));
 						break;
 					case Trace:
 						break;

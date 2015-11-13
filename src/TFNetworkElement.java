@@ -13,6 +13,7 @@ public class TFNetworkElement {
     }
 
     public ARPPackage doARPRequest(ARPPackage request){
+        addArpEntry(request.IP_src,request.MAC_src);
         return new ARPPackage(1,arpMACResponse,request.MAC_src,arpIPResponse,request.IP_src);
     }
 
