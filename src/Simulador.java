@@ -63,6 +63,7 @@ public class Simulador{
 						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),initialTTL));
 						break;
 					case Trace:
+						System.out.println(source.trace(destination.getIP(),destination.getNetCIDR()))
 						break;
 				}
 			}else

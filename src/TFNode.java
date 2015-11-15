@@ -114,6 +114,51 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
         }
         throw new Exception("Destination unreacheable");
     }
+	
+	public String trace(String dstIP,int dstCIDR) throws Exception{
+		StringBuilder log = new StringBuilder();
+		String MAC_dst = this.searchMAC(dstIP);
+        boolean sameNetwork = address.isSameNetwork(dstIP,dstCIDR);
+        ARPPackage arpRequest = null;
+        ARPPackage arpResponse = null;
+		
+		 if(MAC_dst == null){
+            if(sameNetwork){
+                arpRequest = new ARPPackage(getMAC(),getIP(),dstIP);
+                arpResponse = getLAN().doARPRequest(arpRequest);
+            }else{
+                arpRequest = new ARPPackage(getMAC(),getIP(),gatewayIP);
+                arpResponse = gateway.doARPRequest(arpRequest);
+            }
+            if(arpResponse!=null){
+                addArpEntry(arpResponse.IP_src,arpResponse.MAC_src);
+                MAC_dst = arpResponse.MAC_src;
+            }
+        }
+		
+		if(MAC_dst!=null){
+            ICMPPackage icmpRequest = new ICMPPackage(getMAC(),MAC_dst,getIP(),getNetCIDR(),dstIP,dstCIDR);
+            icmpRequest.TTL = 1;
+            ICMPPackage icmpResponse = null;
+            if(sameNetwork){
+                icmpResponse = getLAN().doICMPRequest(icmpRequest);
+            }else{
+				icmpResponse = gateway.doICMPRequest(icmpRequest);
+				while(icmpResponse.type.equals("ICMP_TIMEEXCEEDED") ){
+					icmpRequest.TTL += 1;
+					icmpResponse = gateway.doICMPRequest(icmpRequest);
+				}
+                
+            }
+            log.append(arpRequest.toString()+"\n");
+            log.append(arpResponse.toString()+"\n");
+            log.append(icmpRequest.toString()+"\n");
+            log.append(icmpResponse.toString());
+            return log.toString();
+        }
+        throw new Exception("Destination unreacheable");
+		
+	}
 
     public String toString(){
         return "Name:"+getName()+" MAC:"+getMAC()+" IP/Prefix:"+getIPPrefix()+" gatewayIP:"+gatewayIP;
