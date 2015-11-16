@@ -143,17 +143,18 @@ public class TFNode extends TFNetworkElement  implements ITFNetworkAddress{
             if(sameNetwork){
                 icmpResponse = getLAN().doICMPRequest(icmpRequest);
             }else{
+                    log.append(arpRequest.toString()+"\n");
+                    log.append(arpResponse.toString()+"\n");
 				icmpResponse = gateway.doICMPRequest(icmpRequest);
-				while(icmpResponse.type.equals("ICMP_TIMEEXCEEDED") ){
+				while(icmpResponse.type.toString()==("ICMP_TIMEEXCEEDED")){
 					icmpRequest.TTL += 1;
+                    log.append(icmpRequest.toString()+"\n");
+                    log.append(icmpResponse.toString()+"\n");
 					icmpResponse = gateway.doICMPRequest(icmpRequest);
 				}
                 
             }
-            log.append(arpRequest.toString()+"\n");
-            log.append(arpResponse.toString()+"\n");
-            log.append(icmpRequest.toString()+"\n");
-            log.append(icmpResponse.toString());
+            
             return log.toString();
         }
         throw new Exception("Destination unreacheable");

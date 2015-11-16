@@ -29,7 +29,7 @@ public class Simulador{
 			sCommand = args[1].toLowerCase();
 			if(sCommand.equals("ping"))
 				command = SimCommand.Ping;
-			else if(sCommand.equals("trace"))
+			else if(sCommand.equals("traceroute"))
 				command = SimCommand.Trace;
 			else
 				throw new Exception("Invalid command "+sCommand);
@@ -63,7 +63,7 @@ public class Simulador{
 						System.out.println(source.ping(destination.getIP(),destination.getNetCIDR(),initialTTL));
 						break;
 					case Trace:
-						System.out.println(source.trace(destination.getIP(),destination.getNetCIDR()))
+						System.out.println(source.trace(destination.getIP(),destination.getNetCIDR()));
 						break;
 				}
 			}else
